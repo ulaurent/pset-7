@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Quote
+{% endblock %}
+
+{% block main %}
+    <form action = "/buy" method = "post">
+        <div class = "form-group">
+        <input class="form-control" type="text-center" name="ticker" placeholder="Ticker">
+        <input class="form-control" type="text-center" name="buy" placeholder="# of Shares">
+        </div>
+          <button class="btn btn-primary" type = "submit">Buy</button>
+    </form>
+{% endblock %}
