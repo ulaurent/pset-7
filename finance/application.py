@@ -226,12 +226,20 @@ def sell():
 
     elif request.method == "POST":
         shares = (int)(request.form.get("shares"))
-        if shares <= 0:
-            return apology("Must specify a valid number of stocks")
+        #if shares >= 0:
+            #return apology("Must specify a valid number of stocks")
 
-        #Delete the stock specified from users portfolio
-        stocks = db.execute("SELECT * FROM portfolio WHERE id = :userID", userID = session["user_id"])
-        stockName = request.form.get("stock")
+        symbol = request.values.get("symbol")
+
+        if not symbol:
+            return apology("Must Select symbol")
+
+
+        stock = lookup(symbol)
+
+        db.execute("INSERT INTO portfolio (price,time,symbol,shares, id) VALUES (:price,:time,:symbol,:shares, :userID);",
+                         price = stock["price"], time = date.today(), symbol = stock["symbol"], shares = shares, userID = session["user_id"])
+
         #DELETE stock FROM portfolio WHERE
         return redirect("/")
 
