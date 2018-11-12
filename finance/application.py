@@ -221,27 +221,42 @@ def register():
 def sell():
     """Sell shares of stock"""
     if request.method == "GET":
-        ownedStocks = db.execute("SELECT * FROM portfolio WHERE id = :userID", userID = session["user_id"])
-        return render_template("sell.html", ownedStocks = ownedStocks)
+
+        ownedStocks = db.execute("SELECT symbol FROM portfolio WHERE id = :userID GROUP BY symbol", userID = session["user_id"])
+        stock = []
+        for symbol in ownedStocks:
+            stock.append(symbol["symbol"])
+
+        return render_template("sell.html", stocks = stock, test = ownedStocks)
 
     elif request.method == "POST":
-        shares = (int)(request.form.get("shares"))
-        #if shares >= 0:
-            #return apology("Must specify a valid number of stocks")
 
-        symbol = request.values.get("symbol")
+        if not request.form.get("symbol"):
+            return apology("Must Specify Stock")
 
-        if not symbol:
-            return apology("Must Select symbol")
+        if not request.form.get("shares"):
+            return apology("Must Specifiy Quanitity")
+
+        shares = float(request.form.get("shares"))
+        symbol = request.form.get("symbol")
+        search = lookup(symbol)
+
+        # Get users cash amount
+        cashBalance = (db.execute("SELECT cash FROM users WHERE id = :userID", userID = session["user_id"]))
+        balance_cash = float(cashBalance[0]["cash"])
+        setCash = (shares *((float)(search["price"]))) + balance_cash
+
+        #Update users Total Holding Value
 
 
-        stock = lookup(symbol)
+        # Update users cash amount available
+        db.execute("UPDATE users SET cash = :setCash WHERE id = :userID", setCash = setCash, userID = session["user_id"])
 
-        db.execute("INSERT INTO portfolio (price,time,symbol,shares, id) VALUES (:price,:time,:symbol,:shares, :userID);",
-                         price = stock["price"], time = date.today(), symbol = stock["symbol"], shares = shares, userID = session["user_id"])
+        # Update Users Portfolio
+        db.execute("INSERT INTO portfolio (price,time,symbol,shares, id) VALUES (:price,:time,:symbol,:shares, :userID)",
+                         price = search["price"], time = date.today(), symbol = symbol, shares = (shares)*(-1), userID = session["user_id"])
 
-        #DELETE stock FROM portfolio WHERE
-        return redirect("/")
+        return render_template("sell.html", test = balance_cash)
 
 
 
