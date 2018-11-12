@@ -1,5 +1,7 @@
 import os
 
+import datetime
+
 from datetime import date
 from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
@@ -48,6 +50,7 @@ def index():
     balance = totalBalance[0]["cash"]
 
     totalHoldings = 0
+
     for row in transactions:
         totalHoldings += (row["price"] * row["shares"])
 
@@ -82,9 +85,10 @@ def buy():
         if sharePrice > userBalance:
             return apology("Not enough money in your account")
         else:
+            time = str(datetime.datetime.strptime(datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"),"%Y-%m-%d %H:%M:%S"))
             #Add Transaction to portfolio
             db.execute("INSERT INTO portfolio (price,time,symbol,shares, id) VALUES (:price,:time,:symbol,:shares, :userID)",
-                         price = stock["price"], time = date.today(), symbol = stock["symbol"], shares = shares, userID = session["user_id"])
+                         price = stock["price"], time = time, symbol = stock["symbol"], shares = shares, userID = session["user_id"])
             #Adjust total cash amount from users per session
             db.execute("UPDATE users SET cash = :adjustedAmount WHERE id = :userID",
                         adjustedAmount = totalBalance, userID = session["user_id"])
@@ -99,7 +103,12 @@ def buy():
 @login_required
 def history():
     """Show history of transactions"""
-    return apology("TODO")
+    transactions = db.execute("SELECT * FROM portfolio WHERE id = :userID", userID = session["user_id"])
+    totalBalance = db.execute("SELECT * FROM users WHERE id = :userID", userID = session["user_id"])
+    balance = totalBalance[0]["cash"]
+
+
+    return render_template("history.html", transaction = transactions)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -227,7 +236,7 @@ def sell():
         for symbol in ownedStocks:
             stock.append(symbol["symbol"])
 
-        return render_template("sell.html", stocks = stock, test = ownedStocks)
+        return render_template("sell.html", stocks = stock)
 
     elif request.method == "POST":
 
@@ -253,10 +262,11 @@ def sell():
         db.execute("UPDATE users SET cash = :setCash WHERE id = :userID", setCash = setCash, userID = session["user_id"])
 
         # Update Users Portfolio
+        time = str(datetime.datetime.strptime(datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"),"%Y-%m-%d %H:%M:%S"))
         db.execute("INSERT INTO portfolio (price,time,symbol,shares, id) VALUES (:price,:time,:symbol,:shares, :userID)",
-                         price = search["price"], time = date.today(), symbol = symbol, shares = (shares)*(-1), userID = session["user_id"])
+                         price = search["price"], time = time, symbol = symbol, shares = (shares)*(-1), userID = session["user_id"])
 
-        return render_template("sell.html", test = balance_cash)
+        return render_template("sell.html")
 
 
 

@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    History
+{% endblock %}
+
+{% block main %}
+    <ul>
+        <h1>History</h1>
+
+        {% for row in transaction%}
+            <li> Company: {{row["symbol"]}} -- Shares: {{row["shares"]}} -- Current Price: ${{row["price"]}} -- Time O.P: {{row["time"]}}</li>
+        {% endfor %}
+
+    </ul>
+{% endblock %}

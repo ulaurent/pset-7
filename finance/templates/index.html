@@ -6,10 +6,12 @@
 
 {% block main %}
     <ul>
-        Portfolio
+        <h1>Portfolio</h1>
 
         {% for row in transaction%}
-            <li> Company: {{row["symbol"]}} -- Shares: {{row["shares"]}} -- Current Price: ${{row["price"]}} </li>
+            {% if row["shares"] > 0 %}
+                <li> Company: {{row["symbol"]}} -- Shares: {{row["shares"]}} -- Current Price: ${{row["price"]}} </li>
+            {% endif%}
         {% endfor %}
         <li>Total Value of Holding: ${{totalHoldings}}</li>
         <li>Available Cash Balance: ${{balance}}</li>
