@@ -64,14 +64,14 @@ def buy():
     if request.method == "POST":
         if not request.form.get("ticker"):
             return apology("Ticker Empty")
-        elif not request.form.get("buy"):
+        elif not request.form.get("shares"):
             return apology("Please choose number of shares")
-        elif (int)(request.form.get("buy")) <= 0:
+        elif (int)(request.form.get("shares")) <= 0:
             return apology("Number of stocks cannot be less than zero")
 
         symbol = request.form.get("ticker")
         stock = lookup(symbol)
-        shares = (int)(request.form.get("buy"))
+        shares = (int)(request.form.get("shares"))
 
         #making sure tiker lookup worked
         if not stock:
@@ -80,7 +80,7 @@ def buy():
         user = db.execute("SELECT * FROM users WHERE id = :username", username = session["user_id"])
         userBalance = float(user[0]["cash"])
         sharePrice = stock["price"] * shares
-        totalBalance = (userBalance - sharePrice)
+        totalBalance = usd(userBalance - sharePrice)
 
         if sharePrice > userBalance:
             return apology("Not enough money in your account")
@@ -88,7 +88,7 @@ def buy():
             time = str(datetime.datetime.strptime(datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"),"%Y-%m-%d %H:%M:%S"))
             #Add Transaction to portfolio
             db.execute("INSERT INTO portfolio (price,time,symbol,shares, id) VALUES (:price,:time,:symbol,:shares, :userID)",
-                         price = stock["price"], time = time, symbol = stock["symbol"], shares = shares, userID = session["user_id"])
+                         price = (stock["price"]), time = time, symbol = stock["symbol"], shares = shares, userID = session["user_id"])
             #Adjust total cash amount from users per session
             db.execute("UPDATE users SET cash = :adjustedAmount WHERE id = :userID",
                         adjustedAmount = totalBalance, userID = session["user_id"])
@@ -173,9 +173,9 @@ def quote():
         quote = lookup(symbol)
 
         if quote:
-            return render_template("quoted.html", company=quote["name"], symbol=quote["symbol"], price = quote["price"])
+            return render_template("quoted.html", company=quote["name"], symbol=quote["symbol"], price = usd(quote["price"]))
         else:
-            return apology("Symbol Ticker does not exist", 500)
+            return apology("Symbol Ticker does not exist", 400)
 
     #Show stock requested// Else send apology invlaid stock
     else:
@@ -196,23 +196,23 @@ def register():
         result = db.execute("SELECT username FROM users WHERE username = :username",
                             username = request.form.get("username"))
         if result:
-            return apology("Username already exist, choose new one",401)
+            return apology("Username already exist, choose new one",400)
 
         #Ensure the username was filled
         if not request.form.get("username"):
-            return apology("must provide username", 403)
+            return apology("must provide username", 400)
 
         #Ensure the password was filled
         elif not request.form.get("password"):
-            return apology("must provide password", 403)
+            return apology("must provide password", 400)
 
         #Ensure the confirm-password is filled
         elif not request.form.get("confirmation"):
-            return apology("must confirm password", 403)
+            return apology("must confirm password", 400)
 
         #Ensure confirm-password is the same as the password
         elif request.form.get("password") != request.form.get("confirmation"):
-            return apology("password and confirmed-password not the same", 403)
+            return apology("password and confirmed-password not the same", 400)
 
         #Insert information into DB, with password HASHED
         add = db.execute("INSERT INTO users (username, hash) VALUES (:username,:hash_pass)",
